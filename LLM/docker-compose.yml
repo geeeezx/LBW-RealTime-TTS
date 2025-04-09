@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  qwen-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: qwen-api:latest
+    container_name: qwen-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY}
+      - QWEN_API_BASE=${QWEN_API_BASE:-https://dashscope.aliyuncs.com/compatible-mode/v1}
+      - QWEN_MODEL=${QWEN_MODEL:-qwen-turbo}
+      - USE_OPENAI_CLIENT=${USE_OPENAI_CLIENT:-true}
+    restart: unless-stopped
+    volumes:
+      - ./.env:/app/.env 

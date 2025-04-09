@@ -1,0 +1,15 @@
+# 必需依赖
+fastapi>=0.104.1
+uvicorn>=0.23.2
+pydantic>=2.4.2
+starlette>=0.27.0
+typing-extensions>=4.8.0
+python-dotenv>=1.0.0
+sse-starlette>=1.6.5
+requests>=2.30.0
+
+# 可选依赖 - 实际运行Qwen模型时需要
+# torch>=2.0.0 
+
+# 可选依赖 - 推荐安装，用于使用OpenAI客户端库调用通义千问
+openai>=1.5.0 
