@@ -15,10 +15,6 @@ services:
     working_dir: /workspace
     ports:
       - "9880:9880"
-      - "9871:9871"
-      - "9872:9872"
-      - "9873:9873"
-      - "9874:9874"
     shm_size: 16G
     deploy:
       resources:
