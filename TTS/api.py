@@ -162,7 +162,7 @@ from transformers import AutoModelForMaskedLM, AutoTokenizer
 import numpy as np
 from feature_extractor import cnhubert
 from io import BytesIO
-from module.models import SynthesizerTrn, SynthesizerTrnV3
+from module.models import SynthesizerTrnV3
 from peft import LoraConfig, PeftModel, get_peft_model
 from AR.models.t2s_lightning_module import Text2SemanticLightningModule
 from text import cleaned_text_to_sequence
@@ -272,7 +272,7 @@ class Sovits:
 
 from process_ckpt import get_sovits_version_from_path_fast,load_sovits_new
 def get_sovits_weights(sovits_path):
-    path_sovits_v3="GPT_SoVITS/pretrained_models/s2Gv3.pth"
+    path_sovits_v3=os.environ.get("SOVITS_PATH", "")
     is_exist_s2gv3=os.path.exists(path_sovits_v3)
 
     version, model_version, if_lora_v3=get_sovits_version_from_path_fast(sovits_path)
@@ -295,12 +295,7 @@ def get_sovits_weights(sovits_path):
 
     model_params_dict = vars(hps.model)
     if model_version!="v3":
-        vq_model = SynthesizerTrn(
-            hps.data.filter_length // 2 + 1,
-            hps.train.segment_size // hps.data.hop_length,
-            n_speakers=hps.data.n_speakers,
-            **model_params_dict
-        )
+        raise ValueError("SoVITS V3 模型不支持")
     else:
         vq_model = SynthesizerTrnV3(
             hps.data.filter_length // 2 + 1,
@@ -1081,24 +1076,6 @@ async def tts_endpoint(request: Request):
         json_post_raw.get("if_sr", False) 
     )
 
-
-@app.get("/")
-async def tts_endpoint(
-        refer_wav_path: str = None,
-        prompt_text: str = None,
-        prompt_language: str = None,
-        text: str = None,
-        text_language: str = None,
-        cut_punc: str = None,
-        top_k: int = 15,
-        top_p: float = 1.0,
-        temperature: float = 1.0,
-        speed: float = 1.0,
-        inp_refs: list = Query(default=[]),
-        sample_steps: int = 32,
-        if_sr: bool = False
-):
-    return handle(refer_wav_path, prompt_text, prompt_language, text, text_language, cut_punc, top_k, top_p, temperature, speed, inp_refs, sample_steps, if_sr)
 
 
 if __name__ == "__main__":

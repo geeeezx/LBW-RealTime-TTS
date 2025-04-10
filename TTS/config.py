@@ -22,10 +22,6 @@ if torch.cuda.is_available():
 else:
     infer_device = "cpu"
 
-webui_port_main = 9874
-webui_port_uvr5 = 9873
-webui_port_infer_tts = 9872
-webui_port_subfix = 9871
 
 api_port = 9880
 
@@ -57,10 +53,5 @@ class Config:
         self.exp_root = exp_root
         self.python_exec = python_exec
         self.infer_device = infer_device
-
-        self.webui_port_main = webui_port_main
-        self.webui_port_uvr5 = webui_port_uvr5
-        self.webui_port_infer_tts = webui_port_infer_tts
-        self.webui_port_subfix = webui_port_subfix
 
         self.api_port = api_port
