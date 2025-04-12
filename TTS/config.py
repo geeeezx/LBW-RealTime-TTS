@@ -1,10 +1,10 @@
 import sys,os
-
+import json
 import torch
 
 # 推理用的指定模型
-sovits_path = ""
-gpt_path = ""
+sovits_path = "GPT_SoVITS/lbw_weights/sovits/xxx_e2_s96_l32.pth"
+gpt_path = "GPT_SoVITS/lbw_weights/gpt/lbw-l32-e10.ckpt"
 is_half_str = os.environ.get("is_half", "True")
 is_half = True if is_half_str.lower() == 'true' else False
 is_share_str = os.environ.get("is_share","False")
@@ -14,6 +14,8 @@ cnhubert_path = "GPT_SoVITS/pretrained_models/chinese-hubert-base"
 bert_path = "GPT_SoVITS/pretrained_models/chinese-roberta-wwm-ext-large"
 pretrained_sovits_path = "GPT_SoVITS/pretrained_models/s2G488k.pth"
 pretrained_gpt_path = "GPT_SoVITS/pretrained_models/s1bert25hz-2kh-longer-epoch=68e-step=50232.ckpt"
+ref_wav_path = "ref_wav/ref_lbw.WAV"
+ref_text = json.load(open("ref_wav/ref_text.json"))["text"]
 
 exp_root = "logs"
 python_exec = sys.executable or "python"
@@ -49,6 +51,10 @@ class Config:
         self.bert_path = bert_path
         self.pretrained_sovits_path = pretrained_sovits_path
         self.pretrained_gpt_path = pretrained_gpt_path
+
+        self.ref_wav_path = ref_wav_path
+        self.ref_text = ref_text
+        self.ref_language = "zh"
 
         self.exp_root = exp_root
         self.python_exec = python_exec

@@ -168,7 +168,6 @@ from AR.models.t2s_lightning_module import Text2SemanticLightningModule
 from text import cleaned_text_to_sequence
 from text.cleaner import clean_text
 from module.mel_processing import spectrogram_torch
-from tools.my_utils import load_audio
 import config as global_config
 import logging
 import subprocess
@@ -176,9 +175,9 @@ import subprocess
 
 class DefaultRefer:
     def __init__(self, path, text, language):
-        self.path = args.default_refer_path
-        self.text = args.default_refer_text
-        self.language = args.default_refer_language
+        self.path = path
+        self.text = text
+        self.language = language
 
     def is_ready(self) -> bool:
         return is_full(self.path, self.text, self.language)
@@ -272,10 +271,13 @@ class Sovits:
 
 from process_ckpt import get_sovits_version_from_path_fast,load_sovits_new
 def get_sovits_weights(sovits_path):
-    path_sovits_v3=os.environ.get("SOVITS_PATH", "")
+    path_sovits_v3="GPT_SoVITS/pretrained_models/s2Gv3.pth"
     is_exist_s2gv3=os.path.exists(path_sovits_v3)
 
     version, model_version, if_lora_v3=get_sovits_version_from_path_fast(sovits_path)
+    logger.info(f"SoVITS 路径: '{sovits_path}'")
+    logger.info(f"SoVITS V3 底模路径: '{path_sovits_v3}'")
+    logger.info(f"SoVITS V3 底模是否存在: {is_exist_s2gv3}")
     if if_lora_v3==True and is_exist_s2gv3==False:
         logger.info("SoVITS V3 底模缺失，无法加载相应 LoRA 权重")
 
@@ -358,15 +360,22 @@ def get_gpt_weights(gpt_path):
     gpt = Gpt(max_sec, t2s_model)
     return gpt
 
-def change_gpt_sovits_weights(gpt_path,sovits_path):
+def change_gpt_sovits_weights(gpt_path, sovits_path):
     try:
+        logger.info(f"GPT 路径: '{gpt_path}'")
+        logger.info(f"SoVITS 路径: '{sovits_path}'")
+        logger.info(f"SoVITS底模路径 (SOVITS_PATH): '{os.environ.get('SOVITS_PATH', '')}'")
+        
         gpt = get_gpt_weights(gpt_path)
         sovits = get_sovits_weights(sovits_path)
+        speaker_list["default"] = Speaker(name="default", gpt=gpt, sovits=sovits)
+        logger.info(f"模型加载成功! speaker_list keys: {list(speaker_list.keys())}")
+        return JSONResponse({"code": 0, "message": "Success"}, status_code=200)
     except Exception as e:
+        logger.error(f"模型加载失败: {str(e)}")
+        import traceback
+        logger.error(traceback.format_exc())  # 打印完整堆栈
         return JSONResponse({"code": 400, "message": str(e)}, status_code=400)
-
-    speaker_list["default"] = Speaker(name="default", gpt=gpt, sovits=sovits)
-    return JSONResponse({"code": 0, "message": "Success"}, status_code=200)
 
 
 def get_bert_feature(text, word2ph):
@@ -937,7 +946,11 @@ bert_path = args.bert_path
 default_cut_punc = args.cut_punc
 
 # 应用参数配置
-default_refer = DefaultRefer(args.default_refer_path, args.default_refer_text, args.default_refer_language)
+# Use values from g_config as fallback if command-line arguments are empty
+default_refer_path = args.default_refer_path if args.default_refer_path else g_config.ref_wav_path
+default_refer_text = args.default_refer_text if args.default_refer_text else g_config.ref_text
+default_refer_language = args.default_refer_language if args.default_refer_language else g_config.ref_language
+default_refer = DefaultRefer(default_refer_path, default_refer_text, default_refer_language)
 
 # 模型路径检查
 if sovits_path == "":
@@ -1002,6 +1015,12 @@ else:
     bert_model = bert_model.to(device)
     ssl_model = ssl_model.to(device)
 change_gpt_sovits_weights(gpt_path = gpt_path, sovits_path = sovits_path)
+
+# 修改加载模型的代码，添加这行打印
+logger.info(f"当前使用的设备: {device}")
+logger.info(f"CUDA是否可用: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    logger.info(f"GPU名称: {torch.cuda.get_device_name(0)}")
 
 
 
@@ -1068,9 +1087,9 @@ async def tts_endpoint(request: Request):
         json_post_raw.get("text_language"),
         json_post_raw.get("cut_punc"),
         json_post_raw.get("top_k", 15),
-        json_post_raw.get("top_p", 1.0),
-        json_post_raw.get("temperature", 1.0),
-        json_post_raw.get("speed", 1.0),
+        json_post_raw.get("top_p", 0.5),
+        json_post_raw.get("temperature", 0.5),
+        json_post_raw.get("speed", 1.1),
         json_post_raw.get("inp_refs", []),
         json_post_raw.get("sample_steps", 32),
         json_post_raw.get("if_sr", False) 
